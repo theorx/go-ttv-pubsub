@@ -3,6 +3,9 @@
 ## Author
 * Lauri Orgla `theorx@hotmail.com`
 
+## Changelog
+* [Initial release] 1.0.0 - 30.11.2019
+
 ## Description
 *PUBSUB Websocket api client implementation written in golang, motivation was to build a client
 that actually works. There are other implementations that are not working so well or are not 
