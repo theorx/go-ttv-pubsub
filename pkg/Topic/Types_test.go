@@ -1,8 +1,8 @@
 package Topic_test
 
 import (
+	"github.com/theorx/go-ttv-pubsub/pkg/Topic"
 	"testing"
-	"ttvWS/Topic"
 )
 
 func TestGetType(t *testing.T) {

@@ -1,7 +1,6 @@
-package WSClient
+package TTVClient
 
 import (
-	"log"
 	"sync/atomic"
 	"time"
 )
@@ -10,7 +9,7 @@ func (c *Client) pingLoop() {
 	for {
 
 		if atomic.LoadInt64(&c.connectionStatus) == 0 {
-			log.Println("Connection status 0, shutting down pingLoop")
+			c.log("Connection status 0, shutting down pingLoop")
 			return
 		}
 
@@ -22,13 +21,13 @@ func (c *Client) pingLoop() {
 
 			if c.lastPingTS < (time.Now().Unix() - 120) {
 				//shit hits the fan and we're most likely not connected to the service anymore, handle reconnection?!? todo:@@@
-				log.Println("Last ping was too long ago, 120+ seconds, reconnecting!")
+				c.log("Last ping was too long ago, 120+ seconds, reconnecting!")
 				c.reconnect()
 				return
 			}
 
 			if c.lastPongTS-c.lastPingTS > 20 {
-				log.Println("Last pong was more than 20 seconds late, reconnecting!")
+				c.log("Last pong was more than 20 seconds late, reconnecting!")
 				c.reconnect()
 				return
 			}

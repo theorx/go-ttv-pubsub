@@ -1,8 +1,8 @@
-package WSClient
+package TTVClient
 
 import (
+	"github.com/theorx/go-ttv-pubsub/pkg/Topic"
 	"time"
-	"ttvWS/Topic"
 )
 
 type IncomingMessage struct {

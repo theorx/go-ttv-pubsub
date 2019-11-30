@@ -1,8 +1,9 @@
-package WSClient
+package TTVClient
 
 import (
 	"errors"
-	"ttvWS/Topic"
+	"github.com/theorx/go-ttv-pubsub/pkg/Topic"
+	"sync/atomic"
 )
 
 var ErrorOperationFailed = errors.New("sub/unsub operation failed")
@@ -13,7 +14,7 @@ func (c *Client) Subscribe(topics []Topic.Topic) error {
 		return ErrorNotConnected
 	}
 
-	resultFN, err := c.Request(&OutgoingMessage{
+	resultFN, err := c.request(&OutgoingMessage{
 		Type: "LISTEN",
 		Data: struct {
 			Topics    []Topic.Topic `json:"topics,omitempty"`
@@ -31,19 +32,7 @@ func (c *Client) Subscribe(topics []Topic.Topic) error {
 	result := resultFN()
 
 	if len(result.Error) == 0 {
-		for _, t := range topics {
-			exists := false
-			for _, ct := range c.topics {
-				if t == ct {
-					exists = true
-				}
-			}
-
-			if exists == false {
-				c.topics = append(c.topics, t)
-			}
-		}
-
+		c.mergeTopics(topics)
 		return nil
 	}
 
@@ -55,7 +44,7 @@ func (c *Client) Unsubscribe(topics []Topic.Topic) error {
 		return ErrorNotConnected
 	}
 
-	resultFN, err := c.Request(&OutgoingMessage{
+	resultFN, err := c.request(&OutgoingMessage{
 		Type: "UNLISTEN",
 		Data: struct {
 			Topics    []Topic.Topic `json:"topics,omitempty"`
@@ -73,25 +62,48 @@ func (c *Client) Unsubscribe(topics []Topic.Topic) error {
 	result := resultFN()
 
 	if len(result.Error) == 0 {
-		//remove topics from list
-		newList := make([]Topic.Topic, 0)
-
-		for _, t := range c.topics {
-			exists := false
-			for _, p := range topics {
-				if t == p {
-					exists = true
-				}
-			}
-
-			if exists == false {
-				newList = append(newList, t)
-			}
-		}
-
-		c.topics = newList
+		c.removeTopics(topics)
 		return nil
 	}
 
 	return ErrorOperationFailed
+}
+
+func (c *Client) removeTopics(topics []Topic.Topic) {
+	//remove topics from list
+	newList := make([]Topic.Topic, 0)
+	for _, t := range c.topics {
+		exists := false
+		for _, p := range topics {
+			if t == p {
+				exists = true
+			}
+		}
+
+		if exists == false {
+			newList = append(newList, t)
+		}
+	}
+	c.topics = newList
+}
+
+func (c *Client) mergeTopics(topics []Topic.Topic) {
+	for _, t := range topics {
+		exists := false
+		for _, ct := range c.topics {
+			if t == ct {
+				exists = true
+			}
+		}
+
+		if exists == false {
+			c.topics = append(c.topics, t)
+		}
+	}
+}
+
+func (c *Client) Close() error {
+	c.log("Closing websocket client..")
+	atomic.StoreInt64(&c.connectionStatus, 2) //ping loop will die
+	return c.conn.Close()
 }

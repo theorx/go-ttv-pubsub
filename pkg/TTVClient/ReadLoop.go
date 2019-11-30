@@ -1,11 +1,10 @@
-package WSClient
+package TTVClient
 
 import (
 	"encoding/json"
 	"errors"
-	"log"
+	"github.com/theorx/go-ttv-pubsub/pkg/Topic"
 	"time"
-	"ttvWS/Topic"
 )
 
 func (c *Client) readLoop() {
@@ -15,7 +14,7 @@ func (c *Client) readLoop() {
 		err := c.conn.ReadJSON(&message)
 
 		if err != nil {
-			log.Println("Closed read loop due to read failure", err)
+			c.log("Closed read loop due to read failure", err)
 
 			c.reconnect()
 			return
@@ -147,7 +146,7 @@ func (c *Client) handleControl(msg IncomingMessage) (bool, error) {
 	}
 
 	if Topic.Type(msgType) == Topic.TypeReconnect {
-		log.Println("Reconnect msg received..")
+		c.log("Reconnect msg received..")
 		c.reconnect()
 		return true, errors.New("shutdown")
 	}
@@ -158,7 +157,9 @@ func (c *Client) handleControl(msg IncomingMessage) (bool, error) {
 func (c *Client) handleUnknown(msg IncomingMessage) {
 	if c.unknownHandler != nil {
 		c.unknownHandler(msg)
+		return
 	}
+	c.log("Unknown message received, set client.SetUnknownHandler(handler) to handle it")
 }
 
 func (c *Client) handleCatchAll(msg IncomingMessage) {

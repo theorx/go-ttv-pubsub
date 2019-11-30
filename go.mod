@@ -1,4 +1,4 @@
-module ttvWS
+module github.com/theorx/go-ttv-pubsub
 
 go 1.13
 
